@@ -18,6 +18,12 @@
 
 ---
 
+<br/>
+
+<p align="center">
+  <img src="assets/screenshots/hero_landing.png" alt="RepoMind Landing Page" width="100%" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+</p>
+
 </div>
 
 <br/>
@@ -27,6 +33,26 @@
 **RepoMind** is an enterprise-grade AI pair-programming and engineering intelligence workstation designed to eliminate context loss, developer onboarding friction, and hallucinated AI explanations.
 
 Unlike generic LLM wrappers that treat source code as raw unstructured text, **RepoMind** operates at the **AST (Abstract Syntax Tree)** and **Dependency Graph** layer. Every file is decomposed along semantic boundaries (classes, functions, interfaces), embedded into high-dimensional vector spaces alongside BM25 sparse indices, and synthesized into answers backed by verified line-level citations `[CTX-n]`.
+
+---
+
+## 📸 Interface Preview
+
+<div align="center">
+
+| **AI Engineering Workspace (3-Pane)** | **2D Force Dependency Graph** |
+|:---:|:---:|
+| <img src="assets/screenshots/workspace_rag.png" alt="AI Engineering Workspace" width="100%" /> | <img src="assets/screenshots/architecture_graph.png" alt="Architecture Graph" width="100%" /> |
+| *Streaming RAG with verified AST line citations & code viewer* | *Interactive multi-language dependency graph & blast radius* |
+
+<br/>
+
+| **Command Center Dashboard** |
+|:---:|
+| <img src="assets/screenshots/dashboard.png" alt="Command Center Dashboard" width="100%" /> |
+| *Real-time telemetry, repository health metrics, and background AST indexing* |
+
+</div>
 
 ---
 
