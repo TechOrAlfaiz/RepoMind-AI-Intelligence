@@ -1,0 +1,32 @@
+{
+  "name": "repomind",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-tenant AI engineering intelligence platform with line-level cited code RAG",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run dev --workspace=@repomind/api",
+    "dev:web": "npm run dev --workspace=@repomind/web",
+    "dev:worker": "npm run dev:worker --workspace=@repomind/api",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "test": "npm run test:unit && npm run test:integration && npm run test:e2e && npm run test:enhancements",
+    "test:unit": "node apps/api/test/unit/unit-suite.test.mjs",
+    "test:integration": "node apps/api/test/integration/integration-suite.test.mjs",
+    "test:e2e": "node apps/api/test/e2e/e2e-lifecycle.test.mjs",
+    "test:enhancements": "node apps/api/test-phase15-enhancements.mjs"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

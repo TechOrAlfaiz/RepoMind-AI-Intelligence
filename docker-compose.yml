@@ -1,0 +1,100 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: repomind-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: repomind
+    networks:
+      - repomind-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: repomind-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - repomind-network
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: repomind-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333" # REST API & Web Dashboard
+      - "6334:6334" # gRPC API
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__ENABLE_CORS: "true"
+    networks:
+      - repomind-network
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: repomind-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - MONGODB_URI=mongodb://mongodb:27017/repomind
+      - REDIS_URL=redis://redis:6379
+      - QDRANT_URL=http://qdrant:6333
+    depends_on:
+      - mongodb
+      - redis
+      - qdrant
+    networks:
+      - repomind-network
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: repomind-worker
+    restart: unless-stopped
+    command: ["npm", "run", "start:worker"]
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/repomind
+      - REDIS_URL=redis://redis:6379
+      - QDRANT_URL=http://qdrant:6333
+    depends_on:
+      - mongodb
+      - redis
+      - qdrant
+    networks:
+      - repomind-network
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: repomind-web
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    networks:
+      - repomind-network
+
+networks:
+  repomind-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  redis_data:
+  qdrant_data:

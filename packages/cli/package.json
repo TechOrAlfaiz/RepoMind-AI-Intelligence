@@ -1,0 +1,16 @@
+{
+  "name": "@repomind/cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RepoMind Command Line Interface Companion",
+  "type": "module",
+  "bin": {
+    "repomind": "./bin/repomind.js"
+  },
+  "dependencies": {
+    "@repomind/shared-types": "^0.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
