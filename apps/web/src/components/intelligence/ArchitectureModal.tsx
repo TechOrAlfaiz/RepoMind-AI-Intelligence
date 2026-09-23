@@ -69,7 +69,7 @@ export function ArchitectureModal({
   async function loadGraph() {
     setLoadingGraph(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/repos/${repo.id}/architecture-graph`);
+      const res = await fetch(`/api/repos/${repo.id}/architecture-graph`);
       if (res.ok) {
         const data = await res.json();
         setGraph(data);
@@ -85,7 +85,7 @@ export function ArchitectureModal({
     if (!bugQuery.trim()) return;
     setInvestigating(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/repos/${repo.id}/investigate-bug`, {
+      const res = await fetch(`/api/repos/${repo.id}/investigate-bug`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: bugQuery.trim() }),
@@ -139,7 +139,7 @@ export function ArchitectureModal({
           ];
 
     try {
-      const res = await fetch(`http://localhost:4000/api/repos/${repo.id}/analyze-pr`, {
+      const res = await fetch(`/api/repos/${repo.id}/analyze-pr`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

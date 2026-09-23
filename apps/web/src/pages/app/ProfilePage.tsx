@@ -392,7 +392,7 @@ export const ProfilePage: React.FC = () => {
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-400 font-mono mt-0.5">
-                        Windows &bull; Chrome &bull; 127.0.0.1 (Localhost Engine)
+                        Current Browser Session &bull; Verified Client
                       </p>
                     </div>
                   </div>

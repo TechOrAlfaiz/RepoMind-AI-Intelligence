@@ -31,7 +31,7 @@ export const CoChangeDrawer: React.FC<CoChangeDrawerProps> = ({
   useEffect(() => {
     if (!isOpen || !repoId) return;
     setLoading(true);
-    fetch(`http://localhost:4000/api/repos/${repoId}/co-changes`)
+    fetch(`/api/repos/${repoId}/co-changes`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && Array.isArray(data.coChanges)) {

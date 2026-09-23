@@ -32,7 +32,7 @@ export const ArchitectureTimelineBar: React.FC<ArchitectureTimelineBarProps> = (
   useEffect(() => {
     if (!repoId) return;
     setLoading(true);
-    fetch(`http://localhost:4000/api/repos/${repoId}/timeline`)
+    fetch(`/api/repos/${repoId}/timeline`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && Array.isArray(data.snapshots)) {

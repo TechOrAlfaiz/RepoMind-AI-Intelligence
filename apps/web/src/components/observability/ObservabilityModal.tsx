@@ -38,12 +38,12 @@ export function ObservabilityModal({ isOpen, onClose }: ObservabilityModalProps)
   async function loadMetrics() {
     setLoadingMetrics(true);
     try {
-      const res = await fetch("http://localhost:4000/api/metrics");
+      const res = await fetch("/api/metrics");
       if (res.ok) {
         const data = await res.json();
         setMetrics(data);
       }
-      const promRes = await fetch("http://localhost:4000/metrics");
+      const promRes = await fetch("/metrics");
       if (promRes.ok) {
         const text = await promRes.text();
         setPromPreview(text);
@@ -58,7 +58,7 @@ export function ObservabilityModal({ isOpen, onClose }: ObservabilityModalProps)
   async function loadAuditLogs() {
     setLoadingAudit(true);
     try {
-      const res = await fetch("http://localhost:4000/api/audit-logs?limit=50");
+      const res = await fetch("/api/audit-logs?limit=50");
       if (res.ok) {
         const data = await res.json();
         setAuditLogs(data.logs || []);
@@ -143,7 +143,7 @@ export function ObservabilityModal({ isOpen, onClose }: ObservabilityModalProps)
                 </span>
                 <div className="flex items-center gap-2">
                   <a
-                    href="http://localhost:4000/metrics"
+                    href="/metrics"
                     target="_blank"
                     rel="noreferrer"
                     className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1"

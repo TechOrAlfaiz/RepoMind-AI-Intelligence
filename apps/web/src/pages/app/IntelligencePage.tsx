@@ -143,7 +143,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({ initialTab =
           queryParams.set("focus", selectedNode.id);
         }
 
-        const url = `http://localhost:4000/api/repos/${selectedRepo.id}/graph?${queryParams.toString()}`;
+        const url = `/api/repos/${selectedRepo.id}/graph?${queryParams.toString()}`;
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
@@ -185,7 +185,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({ initialTab =
     if (!q || !selectedRepo?.id) return;
     setInvestigatingBug(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/repos/${selectedRepo.id}/investigate-bug`, {
+      const res = await fetch(`/api/repos/${selectedRepo.id}/investigate-bug`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -208,7 +208,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({ initialTab =
     setAnalyzingPr(true);
     try {
       const changedFiles = prChangedFiles.split(",").map((f) => f.trim()).filter(Boolean);
-      const res = await fetch(`http://localhost:4000/api/repos/${selectedRepo.id}/analyze-pr`, {
+      const res = await fetch(`/api/repos/${selectedRepo.id}/analyze-pr`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -246,7 +246,7 @@ export const IntelligencePage: React.FC<IntelligencePageProps> = ({ initialTab =
     setLoadingImpact(true);
 
     try {
-      const res = await fetch(`http://localhost:4000/api/repos/${selectedRepo.id}/impact-analysis`, {
+      const res = await fetch(`/api/repos/${selectedRepo.id}/impact-analysis`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -10,7 +10,9 @@ interface UseIngestionProgressOptions {
 
 export function useIngestionProgress({
   repositoryId,
-  wsUrl = "ws://localhost:4000/ws",
+  wsUrl = typeof window !== "undefined"
+    ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws`
+    : "ws://localhost:4000/ws",
   onComplete,
   onError,
 }: UseIngestionProgressOptions) {

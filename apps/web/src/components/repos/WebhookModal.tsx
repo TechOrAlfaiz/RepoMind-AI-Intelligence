@@ -21,7 +21,8 @@ export function WebhookModal({ repo, isOpen, onClose }: WebhookModalProps) {
 
   if (!isOpen) return null;
 
-  const webhookUrl = `http://localhost:4000/api/webhooks/github?repoId=${encodeURIComponent(repo.id)}`;
+  const baseOrigin = typeof window !== "undefined" ? window.location.origin : "";
+  const webhookUrl = `${baseOrigin}/api/webhooks/github?repoId=${encodeURIComponent(repo.id)}`;
   const secretKey = "repomind-webhook-secret-default";
 
   const handleSimulatePush = async () => {
@@ -72,7 +73,7 @@ export function WebhookModal({ repo, isOpen, onClose }: WebhookModalProps) {
     };
 
     try {
-      const res = await fetch(`http://localhost:4000/api/webhooks/github?repoId=${encodeURIComponent(repo.id)}`, {
+      const res = await fetch(`/api/webhooks/github?repoId=${encodeURIComponent(repo.id)}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

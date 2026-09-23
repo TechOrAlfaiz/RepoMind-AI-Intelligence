@@ -14,7 +14,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20.0.0-green.svg?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/license-MIT-purple.svg?style=for-the-badge)](LICENSE)
 
-[**Live Demo**](http://localhost:5173) • [**Architecture**](#-architecture--monorepo-structure) • [**Key Features**](#-core-capabilities) • [**Quickstart**](#-getting-started) • [**CLI Guide**](#-cli-companion) • [**QA Test Suites**](#-automated-qa-suites)
+[**Live Application (Production)**](https://repomind-coral.vercel.app) • [**Architecture**](#-architecture--monorepo-structure) • [**Key Features**](#-core-capabilities) • [**Quickstart**](#-getting-started) • [**CLI Guide**](#-cli-companion) • [**QA Test Suites**](#-automated-qa-suites)
 
 ---
 

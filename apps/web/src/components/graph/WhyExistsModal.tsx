@@ -32,7 +32,7 @@ export const WhyExistsModal: React.FC<WhyExistsModalProps> = ({
     if (!isOpen) return;
 
     setLoading(true);
-    fetch(`http://localhost:4000/api/repos/${repoId}/why-exists/${node.id}`)
+    fetch(`/api/repos/${repoId}/why-exists/${node.id}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((result) => {
         setData(result);
