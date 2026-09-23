@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import session from "express-session";
+import MongoStore from "connect-mongo";
 import { config } from "./config/env.js";
 import { isDbConnected } from "./config/database.js";
 import { authRouter } from "./modules/auth/auth.router.js";
@@ -20,6 +21,9 @@ import { generalRateLimiter } from "./middlewares/rate-limiter.middleware.js";
 import { metricsService } from "./modules/observability/metrics.service.js";
 
 export const app = express();
+
+// Trust reverse proxy (Vercel, Cloudflare, AWS ALB) for secure cookies
+app.set("trust proxy", 1);
 
 // Request Correlation ID & Latency Metrics Tracking
 app.use(correlationMiddleware);
@@ -73,13 +77,24 @@ app.use(
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Express Session configuration
+// Express Session configuration with persistent MongoStore
+const sessionStore = config.mongoUri
+  ? MongoStore.create({
+      mongoUrl: config.mongoUri,
+      collectionName: "sessions",
+      ttl: 7 * 24 * 60 * 60, // 7 days
+      autoRemove: "native",
+      touchAfter: 24 * 3600, // lazy update every 24 hours
+    })
+  : undefined;
+
 app.use(
   session({
     name: "repomind.sid",
     secret: config.sessionSecret,
     resave: false,
     saveUninitialized: false,
+    store: sessionStore,
     cookie: {
       httpOnly: true,
       secure: config.nodeEnv === "production",

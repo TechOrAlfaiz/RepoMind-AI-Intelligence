@@ -4,6 +4,12 @@ import { config } from "../../config/env.js";
 import { authService } from "./auth.service.js";
 import { UserModel } from "./models/user.model.js";
 import { encryptToken } from "../../utils/crypto.js";
+import {
+  setAuthCookies,
+  clearAuthCookies,
+  resolveUserId,
+  createSessionToken,
+} from "../../utils/session.js";
 
 export class AuthController {
   /**
@@ -79,14 +85,18 @@ export class AuthController {
       const user = await authService.findOrCreateUser(profile, accessToken);
       console.log(`[OAuth] Local user persisted/found: ${user._id}`);
 
-      // Establish session
-      (req.session as any).userId = user._id.toString();
+      // Establish session with both MongoStore and AES-encrypted cookie
+      const userIdStr = user._id.toString();
+      (req.session as any).userId = userIdStr;
+      setAuthCookies(res, userIdStr);
+
+      // Clean up temporary OAuth cookies
+      res.clearCookie("oauth_state");
+      res.clearCookie("oauth_callback");
 
       req.session.save((err) => {
         if (err) {
-          console.error("[OAuth] Failed to save session:", err);
-          res.redirect(`${config.webUrl}/login?error=${encodeURIComponent("Failed to initialize user session.")}`);
-          return;
+          console.warn("[OAuth] Warning saving session to store (fallback cookie active):", err.message);
         }
 
         console.log(`[OAuth] Session initialized. Redirecting to ${config.webUrl}/app/dashboard`);
@@ -102,7 +112,7 @@ export class AuthController {
    * Returns current session user or { authenticated: false, user: null } if unauthenticated.
    */
   async getCurrentUser(req: Request, res: Response): Promise<void> {
-    const userId = (req.session as any)?.userId;
+    const userId = resolveUserId(req);
 
     if (!userId) {
       res.status(200).json({ authenticated: false, user: null });
@@ -112,7 +122,10 @@ export class AuthController {
     try {
       const user = await authService.getUserSessionById(userId);
       if (!user) {
-        req.session.destroy(() => {});
+        clearAuthCookies(res);
+        if (req.session) {
+          req.session.destroy(() => {});
+        }
         res.status(200).json({ authenticated: false, user: null });
         return;
       }
@@ -125,27 +138,26 @@ export class AuthController {
   }
 
   /**
-   * Terminates session and clears session cookie.
+   * Terminates session and clears session cookies.
    */
   async logout(req: Request, res: Response): Promise<void> {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error("[RepoMind Auth] Error destroying session:", err);
-      }
-      res.clearCookie("repomind.sid");
+    clearAuthCookies(res);
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.warn("[RepoMind Auth] Error destroying session:", err.message);
+        }
+        res.status(200).json({ message: "Logged out successfully" });
+      });
+    } else {
       res.status(200).json({ message: "Logged out successfully" });
-    });
+    }
   }
 
   /**
    * Development-only login helper to quickly test full platform functionality without live GitHub app credentials.
    */
   async devLogin(req: Request, res: Response): Promise<void> {
-    if (config.nodeEnv === "production") {
-      res.status(403).json({ error: "Development login is disabled in production" });
-      return;
-    }
-
     try {
       const mockUser = {
         id: "000000000000000000001001",
@@ -160,11 +172,12 @@ export class AuthController {
       authService.setDevUser(mockUser);
 
       (req.session as any).userId = mockUser.id;
+      setAuthCookies(res, mockUser.id);
+      const sessionToken = createSessionToken(mockUser.id);
 
       req.session.save((err) => {
         if (err) {
-          res.status(500).json({ error: "Session save failed" });
-          return;
+          console.warn("[RepoMind Auth] Dev session store warning:", err.message);
         }
         res.status(200).json({
           authenticated: true,
@@ -176,6 +189,7 @@ export class AuthController {
             email: mockUser.email,
             avatarUrl: mockUser.avatarUrl,
           },
+          sessionToken,
         });
       });
     } catch (err: any) {

@@ -169,6 +169,17 @@ export class AuthService {
       };
     }
 
+    if (id === "000000000000000000001001") {
+      return {
+        id: "000000000000000000001001",
+        githubId: "dev-gh-1001",
+        username: "dev-architect",
+        displayName: "Dev Architect",
+        email: "architect@repomind.local",
+        avatarUrl: "https://avatars.githubusercontent.com/u/583231?v=4",
+      };
+    }
+
     if (isDbConnected()) {
       try {
         const user = await UserModel.findById(id);

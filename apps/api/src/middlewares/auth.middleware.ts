@@ -26,11 +26,13 @@ declare global {
   }
 }
 
+import { resolveUserId, clearAuthCookies } from "../utils/session.js";
+
 /**
  * Ensures request has an authenticated session. Attaches req.user.
  */
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const userId = (req.session as any)?.userId;
+  const userId = resolveUserId(req);
 
   if (!userId) {
     res.status(401).json({
@@ -43,7 +45,10 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   try {
     const user = await authService.getUserSessionById(userId);
     if (!user) {
-      req.session.destroy(() => {});
+      clearAuthCookies(res);
+      if (req.session) {
+        req.session.destroy(() => {});
+      }
       res.status(401).json({
         error: "Session expired or invalid",
         code: "UNAUTHORIZED",
