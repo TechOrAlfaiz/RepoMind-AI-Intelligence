@@ -9,8 +9,9 @@ export class AuthController {
   /**
    * Redirects user to GitHub's authorization page with a CSRF-protecting state token.
    */
-  async initiateGitHubOAuth(_req: Request, res: Response): Promise<void> {
+  async initiateGitHubOAuth(req: Request, res: Response): Promise<void> {
     const state = crypto.randomBytes(24).toString("hex");
+    const callbackUrl = authService.getCallbackUrl(req);
 
     // Store state in an HTTP-only cookie for 10 minutes to validate in callback
     res.cookie("oauth_state", state, {
@@ -19,8 +20,14 @@ export class AuthController {
       sameSite: "lax",
       maxAge: 10 * 60 * 1000,
     });
+    res.cookie("oauth_callback", callbackUrl, {
+      httpOnly: true,
+      secure: config.nodeEnv === "production",
+      sameSite: "lax",
+      maxAge: 10 * 60 * 1000,
+    });
 
-    const url = authService.getAuthorizationUrl(state);
+    const url = authService.getAuthorizationUrl(state, req);
     res.redirect(url);
   }
 
@@ -28,48 +35,66 @@ export class AuthController {
    * GitHub OAuth Callback: validates state, exchanges code for token, upserts user, establishes session.
    */
   async handleGitHubCallback(req: Request, res: Response): Promise<void> {
-    const { code, state } = req.query as { code?: string; state?: string };
+    const { code, state, error, error_description } = req.query as {
+      code?: string;
+      state?: string;
+      error?: string;
+      error_description?: string;
+    };
     const savedState = req.cookies?.oauth_state;
+    const savedCallback = req.cookies?.oauth_callback || authService.getCallbackUrl(req);
 
-    // Validate CSRF state parameter
-    if (!state || !savedState || state !== savedState) {
-      res.clearCookie("oauth_state");
-      res.status(400).send("OAuth state verification failed. Possible CSRF attack detected.");
+    // Clear OAuth state cookies
+    res.clearCookie("oauth_state");
+    res.clearCookie("oauth_callback");
+
+    // Handle OAuth provider error (e.g. user cancelled or permissions denied)
+    if (error) {
+      console.warn(`[OAuth] GitHub callback reported error: ${error} - ${error_description || "no description"}`);
+      res.redirect(`${config.webUrl}/login?error=${encodeURIComponent(error_description || error)}`);
       return;
     }
 
-    res.clearCookie("oauth_state");
+    // Validate CSRF state parameter
+    if (!state || !savedState || state !== savedState) {
+      console.warn("[OAuth] CSRF state mismatch detected in callback");
+      res.redirect(`${config.webUrl}/login?error=${encodeURIComponent("Security state verification failed. Please try again.")}`);
+      return;
+    }
 
     if (!code) {
-      res.status(400).send("Missing OAuth authorization code from GitHub.");
+      res.redirect(`${config.webUrl}/login?error=${encodeURIComponent("Missing authorization code from GitHub.")}`);
       return;
     }
 
     try {
-      // Exchange code for token
-      const accessToken = await authService.exchangeCodeForToken(code);
+      // Exchange code for token with matching redirect_uri
+      const accessToken = await authService.exchangeCodeForToken(code, savedCallback);
 
       // Fetch GitHub profile
       const profile = await authService.fetchGitHubProfile(accessToken);
+      console.log(`[OAuth] GitHub user profile fetched for: ${profile.login}`);
 
       // Encrypt token and persist user
       const user = await authService.findOrCreateUser(profile, accessToken);
+      console.log(`[OAuth] Local user persisted/found: ${user._id}`);
 
       // Establish session
       (req.session as any).userId = user._id.toString();
 
       req.session.save((err) => {
         if (err) {
-          console.error("[RepoMind Auth] Failed to save session:", err);
-          res.status(500).send("Failed to initialize user session.");
+          console.error("[OAuth] Failed to save session:", err);
+          res.redirect(`${config.webUrl}/login?error=${encodeURIComponent("Failed to initialize user session.")}`);
           return;
         }
 
-        res.redirect(`${config.webUrl}/?auth=success`);
+        console.log(`[OAuth] Session initialized. Redirecting to ${config.webUrl}/app/dashboard`);
+        res.redirect(`${config.webUrl}/app/dashboard`);
       });
     } catch (err: any) {
-      console.error("[RepoMind Auth] OAuth callback failed:", err.message);
-      res.redirect(`${config.webUrl}/?auth=error&message=${encodeURIComponent(err.message)}`);
+      console.error("[OAuth] Callback processing failed:", err.message);
+      res.redirect(`${config.webUrl}/login?error=${encodeURIComponent(err.message)}`);
     }
   }
 

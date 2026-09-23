@@ -9,12 +9,31 @@ const inMemoryUsers = new Map<string, SessionUser & { encryptedAccessToken?: any
 
 export class AuthService {
   /**
+   * Resolves the canonical OAuth callback URL based on environment or request headers.
+   */
+  getCallbackUrl(req?: any): string {
+    if (config.githubCallbackUrl) {
+      return config.githubCallbackUrl;
+    }
+    if (req) {
+      const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "http";
+      const host = (req.headers["x-forwarded-host"] as string) || req.headers.host;
+      if (host) {
+        return `${proto}://${host}/api/auth/github/callback`;
+      }
+    }
+    return `${config.apiUrl}/api/auth/github/callback`;
+  }
+
+  /**
    * Generates the GitHub OAuth authorization URL with CSRF state token and scopes.
    */
-  getAuthorizationUrl(state: string): string {
+  getAuthorizationUrl(state: string, req?: any): string {
     const clientId = config.githubClientId || "placeholder_client_id";
-    const callbackUrl = config.githubCallbackUrl || `${config.apiUrl}/api/auth/github/callback`;
+    const callbackUrl = this.getCallbackUrl(req);
     const scopes = encodeURIComponent("read:user,repo");
+
+    console.log(`[OAuth] GitHub authorization started (client_id: ${clientId}, callback: ${callbackUrl})`);
 
     return `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
       callbackUrl,
@@ -22,13 +41,25 @@ export class AuthService {
   }
 
   /**
-   * Exchanges authorization code for a GitHub access token.
+   * Exchanges authorization code for a GitHub access token with matching redirect_uri.
    */
-  async exchangeCodeForToken(code: string): Promise<string> {
+  async exchangeCodeForToken(code: string, redirectUri?: string): Promise<string> {
     if (!config.githubClientId || !config.githubClientSecret) {
       throw new Error(
         "GitHub OAuth credentials (GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET) are not configured in environment.",
       );
+    }
+
+    console.log(`[OAuth] GitHub token exchange initiated (code prefix: ${code.slice(0, 6)}...)`);
+
+    const payload: Record<string, string> = {
+      client_id: config.githubClientId,
+      client_secret: config.githubClientSecret,
+      code,
+    };
+
+    if (redirectUri) {
+      payload.redirect_uri = redirectUri;
     }
 
     const response = await fetch("https://github.com/login/oauth/access_token", {
@@ -37,11 +68,7 @@ export class AuthService {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({
-        client_id: config.githubClientId,
-        client_secret: config.githubClientSecret,
-        code,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -55,6 +82,7 @@ export class AuthService {
       throw new Error(data.error_description || data.error || "Failed to retrieve access token from GitHub");
     }
 
+    console.log("[OAuth] GitHub token exchange completed successfully");
     return data.access_token;
   }
 

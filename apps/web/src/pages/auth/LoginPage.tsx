@@ -34,6 +34,14 @@ export const LoginPage: React.FC = () => {
     }
   }, [isAuthenticated, navigate, redirectUrl]);
 
+  // Capture OAuth error or message query params from callback redirect
+  React.useEffect(() => {
+    const oauthError = searchParams.get("error") || searchParams.get("message");
+    if (oauthError) {
+      setError(oauthError);
+    }
+  }, [searchParams]);
+
   const handleDevLogin = async () => {
     setIsLoading(true);
     setError(null);
