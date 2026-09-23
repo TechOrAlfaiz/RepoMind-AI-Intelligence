@@ -13,3 +13,10 @@ coverage/
 .qdrant_storage
 mongo_data/
 redis_data/
+
+# IDE & Agent Scratch Files
+.agents/
+walkthrough.md
+*Prompt*.md
+RepoMind_*_Prompt.md
+
